@@ -1,3 +1,77 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+body {
+  font-family: sans-serif;
+  background-color: #f4f5f7;
+  margin: 0;
+  padding: 0;
+}
+
+h1 {
+  padding: 1rem;
+}
+
+.board {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+.column {
+  background-color: #ebecf0;
+  border-radius: 3px;
+  padding: 1rem;
+  width: 272px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.task {
+  background-color: #fff;
+  border-radius: 3px;
+  padding: 0.75rem;
+  box-shadow: 0 1px 0 rgba(9, 30, 66, 0.25);
+  cursor: grab;
+}
+
+input,
+button {
+  font: inherit;
+}
+
+.column-title {
+  font-weight: bold;
+}
+
+.add-task {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.add-column-section {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 1rem;
+}
+
+button {
+  background-color: #0052cc;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #0747a6;
+}
+
+input[type=\"text\"] {
+  padding: 0.5rem;
+  border: 1px solid #dfe1e6;
+  border-radius: 3px;
+  width: 100%;
+}

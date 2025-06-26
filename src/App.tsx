@@ -1,187 +1,139 @@
-import React, { useState, useEffect } from "react";
-import {
-  DragDropContext,
-  Droppable,
-  Draggable,
-  DropResult,
-} from "react-beautiful-dnd";
-import { v4 as uuidv4 } from "uuid";
+import { useEffect, useState } from "react";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import { v4 as uuid } from "uuid";
+import { ColumnType, TaskType } from "./types";
+import { saveToLocalStorage, loadFromLocalStorage } from "./utils/localStorage";
 
-type Task = {
-  id: string;
-  content: string;
-};
+const DEFAULT_COLUMNS: ColumnType[] = [
+  { id: "backlog", title: "Backlog", taskIds: [] },
+  { id: "doing", title: "Doing", taskIds: [] },
+  { id: "review", title: "Review", taskIds: [] },
+  { id: "done", title: "Done", taskIds: [] }
+];
 
-type Column = {
-  id: string;
-  title: string;
-  tasks: Task[];
-};
-
-type Columns = {
-  [key: string]: Column;
-};
-
-const App: React.FC = () => {
-  const [columns, setColumns] = useState<Columns>({});
-  const [columnOrder, setColumnOrder] = useState<string[]>([]);
+export default function App() {
+  const [columns, setColumns] = useState<ColumnType[]>([]);
+  const [tasks, setTasks] = useState<Record<string, TaskType>>({});
+  const [newTasks, setNewTasks] = useState<Record<string, string>>({});
+  const [newColumnTitle, setNewColumnTitle] = useState("");
 
   useEffect(() => {
-    const stored = localStorage.getItem("kanban-data");
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      setColumns(parsed.columns);
-      setColumnOrder(parsed.columnOrder);
+    const saved = loadFromLocalStorage("kanban-board");
+    if (saved) {
+      setColumns(saved.columns);
+      setTasks(saved.tasks);
     } else {
-      const initialCols: Columns = {
-        [uuidv4()]: {
-          id: uuidv4(),
-          title: "To Do",
-          tasks: [
-            { id: uuidv4(), content: "Task 1" },
-            { id: uuidv4(), content: "Task 2" },
-          ],
-        },
-        [uuidv4()]: {
-          id: uuidv4(),
-          title: "In Progress",
-          tasks: [{ id: uuidv4(), content: "Task 3" }],
-        },
-        [uuidv4()]: {
-          id: uuidv4(),
-          title: "Done",
-          tasks: [],
-        },
-      };
-      setColumns(initialCols);
-      setColumnOrder(Object.keys(initialCols));
+      setColumns(DEFAULT_COLUMNS);
     }
   }, []);
 
   useEffect(() => {
-    localStorage.setItem(
-      "kanban-data",
-      JSON.stringify({ columns, columnOrder })
+    saveToLocalStorage("kanban-board", { columns, tasks });
+  }, [columns, tasks]);
+
+  const addTask = (columnId: string) => {
+    const content = newTasks[columnId];
+    if (!content?.trim()) return;
+
+    const id = uuid();
+    const newTask: TaskType = { id, content };
+    setTasks((prev) => ({ ...prev, [id]: newTask }));
+    setColumns((prev) =>
+      prev.map((col) =>
+        col.id === columnId ? { ...col, taskIds: [...col.taskIds, id] } : col
+      )
     );
-  }, [columns, columnOrder]);
-
-  const onDragEnd = (result: DropResult) => {
-    const { source, destination } = result;
-    if (!destination) return;
-
-    const sourceCol = columns[source.droppableId];
-    const destCol = columns[destination.droppableId];
-    const [movedTask] = sourceCol.tasks.splice(source.index, 1);
-
-    if (source.droppableId === destination.droppableId) {
-      sourceCol.tasks.splice(destination.index, 0, movedTask);
-      setColumns({ ...columns, [source.droppableId]: sourceCol });
-    } else {
-      destCol.tasks.splice(destination.index, 0, movedTask);
-      setColumns({
-        ...columns,
-        [source.droppableId]: sourceCol,
-        [destination.droppableId]: destCol,
-      });
-    }
-  };
-
-  const addTask = (colId: string, content: string) => {
-    const newTask: Task = { id: uuidv4(), content };
-    const col = columns[colId];
-    col.tasks.push(newTask);
-    setColumns({ ...columns, [colId]: col });
+    setNewTasks((prev) => ({ ...prev, [columnId]: "" }));
   };
 
   const addColumn = () => {
-    const newId = uuidv4();
-    const newCol: Column = { id: newId, title: "New Column", tasks: [] };
-    setColumns({ ...columns, [newId]: newCol });
-    setColumnOrder([...columnOrder, newId]);
+    if (!newColumnTitle.trim()) return;
+    const id = uuid();
+    const newCol: ColumnType = { id, title: newColumnTitle.trim(), taskIds: [] };
+    setColumns((prev) => [...prev, newCol]);
+    setNewColumnTitle("");
+  };
+
+  const onDragEnd = (result: any) => {
+    const { destination, source, draggableId } = result;
+    if (!destination) return;
+
+    if (destination.droppableId === source.droppableId && destination.index === source.index) return;
+
+    setColumns((prev) => {
+      const updated = [...prev];
+      const srcCol = updated.find((col) => col.id === source.droppableId);
+      const destCol = updated.find((col) => col.id === destination.droppableId);
+      if (!srcCol || !destCol) return prev;
+
+      srcCol.taskIds.splice(source.index, 1);
+      destCol.taskIds.splice(destination.index, 0, draggableId);
+
+      return [...updated];
+    });
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Kanban Board</h1>
-        <button
-          onClick={addColumn}
-          className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700"
-        >
-          Add Column
-        </button>
+    <div>
+      <h1>Kanban Board</h1>
+      <div className="add-column-section">
+        <input
+          type="text"
+          placeholder="New column title"
+          value={newColumnTitle}
+          onChange={(e) => setNewColumnTitle(e.target.value)}
+        />
+        <button onClick={addColumn}>Add Column</button>
       </div>
+
       <DragDropContext onDragEnd={onDragEnd}>
-        <div className="flex gap-6 overflow-x-auto">
-          {columnOrder.map((colId) => {
-            const column = columns[colId];
-            return (
-              <div
-                key={colId}
-                className="bg-white rounded-lg p-4 shadow-md min-w-[250px] flex-shrink-0"
-              >
-                <h2 className="font-semibold text-lg mb-3">{column.title}</h2>
-                <Droppable droppableId={colId}>
-                  {(provided) => (
-                    <div
-                      {...provided.droppableProps}
-                      ref={provided.innerRef}
-                      className="space-y-3 min-h-[50px]"
-                    >
-                      {column.tasks.map((task, index) => (
-                        <Draggable
-                          key={task.id}
-                          draggableId={task.id}
-                          index={index}
-                        >
+        <div className="board">
+          {columns.map((column) => (
+            <div key={column.id} className="column">
+              <div className="column-title">{column.title}</div>
+              <Droppable droppableId={column.id}>
+                {(provided) => (
+                  <div
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                    style={{ minHeight: "20px" }}
+                  >
+                    {column.taskIds.map((taskId, index) => {
+                      const task = tasks[taskId];
+                      return (
+                        <Draggable key={taskId} draggableId={taskId} index={index}>
                           {(provided) => (
                             <div
+                              className="task"
+                              ref={provided.innerRef}
                               {...provided.draggableProps}
                               {...provided.dragHandleProps}
-                              ref={provided.innerRef}
-                              className="bg-gray-50 p-3 rounded shadow-sm hover:shadow-md border"
                             >
                               {task.content}
                             </div>
                           )}
                         </Draggable>
-                      ))}
-                      {provided.placeholder}
-                    </div>
-                  )}
-                </Droppable>
-                <form
-                  className="mt-4 flex"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    const input = e.currentTarget.elements.namedItem(
-                      "task"
-                    ) as HTMLInputElement;
-                    if (input.value.trim()) {
-                      addTask(colId, input.value.trim());
-                      input.value = "";
-                    }
-                  }}
-                >
-                  <input
-                    name="task"
-                    placeholder="Add new task"
-                    className="flex-1 border rounded-l px-2 py-1 text-sm"
-                  />
-                  <button
-                    type="submit"
-                    className="bg-blue-600 text-white px-3 py-1 text-sm rounded-r hover:bg-blue-700"
-                  >
-                    Add
-                  </button>
-                </form>
+                      );
+                    })}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+              <div className="add-task">
+                <input
+                  type="text"
+                  placeholder="Add new task"
+                  value={newTasks[column.id] || ""}
+                  onChange={(e) =>
+                    setNewTasks((prev) => ({ ...prev, [column.id]: e.target.value }))
+                  }
+                />
+                <button onClick={() => addTask(column.id)}>Add</button>
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       </DragDropContext>
     </div>
   );
-};
-
-export default App;
+}

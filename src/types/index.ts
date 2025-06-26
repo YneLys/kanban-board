@@ -1,16 +1,15 @@
-export interface TaskType {
+export type TaskType = {
   id: string;
   content: string;
-}
+};
 
-export interface ColumnType {
+export type ColumnType = {
   id: string;
   title: string;
   taskIds: string[];
-}
+};
 
-export interface BoardData {
-  tasks: { [key: string]: TaskType };
-  columns: { [key: string]: ColumnType };
-  columnOrder: string[];
-}
+export type BoardData = {
+  columns: ColumnType[];
+  tasks: Record<string, TaskType>;
+};

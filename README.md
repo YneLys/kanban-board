@@ -1,20 +1,71 @@
-# 🗂️ Kanban Board with React + TypeScript
+# 🗂️ Kanban Board
 
-This is a simple and functional **Kanban Board** built with React, TypeScript, TailwindCSS, and `react-beautiful-dnd`. It supports column and task creation, drag and drop, and automatic persistence using `localStorage`.
+A simple Kanban board web application built with **React + TypeScript**, inspired by Trello. It allows you to manage tasks in fixed and custom columns using **drag and drop** functionality.
 
-## 🚀 Tech Stack
+## ✨ Features
 
-- React 18
+- ✅ Four fixed columns: `Backlog`, `Doing`, `Review`, `Done`
+- ➕ Add new columns with custom titles
+- 📝 Add tasks to any column
+- 🔁 Reorder tasks using drag and drop (`react-beautiful-dnd`)
+- 💾 Tasks and columns are saved to `localStorage`
+
+## 📸 Preview
+
+![App Screenshot](./screenshot.png)
+
+## 🚀 Technologies
+
+- React
 - TypeScript
+- Vite
 - TailwindCSS
 - react-beautiful-dnd
-- localStorage (native)
-- Vite
+- uuid
 
-## 📦 Installation
+## 🛠️ Installation
 
-1. Clone the repository:
+### Prerequisites
+
+- Node.js (v16 or higher)
+- npm or yarn
+
+### Steps
 
 ```bash
-git clone https://github.com/your-user/kanban-board.git
+# Clone the repository
+git clone https://github.com/YneLys/kanban-board.git
 cd kanban-board
+
+# Install dependencies
+npm install
+
+# Run the development server
+npm run dev
+```
+
+Open your browser at: `http://localhost:5173`
+
+## 🗃️ Folder Structure
+
+```
+kanban-board/
+├── public/
+│   └── index.html
+├── src/
+│   ├── types/
+│   │   └── index.ts
+│   ├── utils/
+│   │   └── localStorage.ts
+│   ├── App.tsx
+│   ├── main.tsx
+│   └── styles.css
+├── package.json
+├── tailwind.config.js
+├── tsconfig.json
+└── vite.config.ts
+```
+
+## 📄 License
+
+This project is licensed under the MIT License.
